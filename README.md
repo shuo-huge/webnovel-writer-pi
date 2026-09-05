@@ -18,10 +18,19 @@ pi install npm:@shuohuge-org/webnovel-writer-pi
 pi install git:github.com/shuo-huge/webnovel-writer-pi
 ```
 
-Python 依赖（一次性）:
+Python 依赖（一次性，运行时需要 `aiohttp` / `filelock` / `pydantic`）:
 
 ```bash
-python -m pip install -r ~/.pi/agent/npm/@shuohuge-org/webnovel-writer-pi/webnovel-writer/scripts/requirements.txt
+python3 -m pip install aiohttp filelock pydantic
+```
+
+或直接用包内 requirements（路径随安装方式不同）:
+
+```bash
+# npm 安装
+python3 -m pip install -r ~/.pi/agent/npm/node_modules/@shuohuge-org/webnovel-writer-pi/webnovel-writer/scripts/requirements.txt
+# git 安装
+python3 -m pip install -r ~/.pi/agent/git/github.com/shuo-huge/webnovel-writer-pi/webnovel-writer/scripts/requirements.txt
 ```
 
 > 需要 `python3`。可用 `WEBNOVEL_PYTHON` 覆盖解释器;`WEBNOVEL_DASHBOARD_PORT` 覆盖面板端口(默认 8765)。
