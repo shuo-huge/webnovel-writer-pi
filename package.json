@@ -1,6 +1,6 @@
 {
   "name": "@shuohuge-org/webnovel-writer-pi",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "长篇网文创作系统 Pi 扩展：/webnovel-* 命令 + webnovel_run 工具 + 技能/提示词资源。",
   "type": "module",
   "license": "GPL-3.0",
