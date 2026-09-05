@@ -12,7 +12,13 @@
 
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { PLUGIN_ROOT, PYTHON, runWebnovel, runWebnovelStream } from "./cli.ts";
+import {
+	PLUGIN_ROOT,
+	PYTHON,
+	ensurePythonDeps,
+	runWebnovel,
+	runWebnovelStream,
+} from "./cli.ts";
 
 /** 解析用户参数里的 `--project-root <dir>`，返回 { 剩余参数, projectRoot }。 */
 function extractProjectRoot(args: string[], fallback: string): { rest: string[]; projectRoot: string } {
@@ -69,6 +75,27 @@ const SUBCOMMANDS = [
 	"knowledge",
 ];
 
+// 每个会话只做一次 Python 依赖检测/自动安装（首次用到时）。
+let depsEnsured = false;
+async function ensureDepsOnce(ctx: {
+	hasUI?: boolean;
+	ui?: { notify?: (msg: string, kind?: "info" | "error" | "success" | "warn") => void };
+}): Promise<void> {
+	if (depsEnsured) return;
+	depsEnsured = true;
+	const status = await ensurePythonDeps();
+	if (ctx.hasUI && ctx.ui?.notify) {
+		if (status === "installed") {
+			ctx.ui.notify("已自动安装 webnovel 所需的 Python 依赖（aiohttp/filelock/pydantic）", "info");
+		} else if (status === "failed") {
+			ctx.ui.notify(
+				"webnovel Python 依赖缺失/安装失败，请手动执行：python3 -m pip install aiohttp filelock pydantic",
+				"error",
+			);
+		}
+	}
+}
+
 export default function webnovelPiExtension(pi: ExtensionAPI) {
 	// ---- 会话启动提示 ----
 	pi.on("session_start", async (_event, ctx) => {
@@ -89,6 +116,7 @@ export default function webnovelPiExtension(pi: ExtensionAPI) {
 			return matches.length > 0 ? matches.map((s) => ({ value: s, label: s })) : null;
 		},
 		handler: async (rawArgs: string, ctx) => {
+			await ensureDepsOnce(ctx);
 			const tokens = rawArgs.trim().split(/\s+/).filter(Boolean);
 			if (tokens.length === 0) {
 				ctx.ui.notify(
@@ -132,6 +160,7 @@ export default function webnovelPiExtension(pi: ExtensionAPI) {
 		pi.registerCommand(sc.name, {
 			description: sc.description,
 			handler: async (rawArgs: string, ctx) => {
+				await ensureDepsOnce(ctx);
 				if (ctx.hasUI) ctx.ui.notify(`${sc.name} ...`, "info");
 
 				if (sc.skill === "dashboard") {
@@ -174,7 +203,8 @@ export default function webnovelPiExtension(pi: ExtensionAPI) {
 			project_root: Type.Optional(Type.String({ description: "书项目根目录。缺省用工作目录。" })),
 			cwd: Type.Optional(Type.String({ description: "子进程工作目录（可选）。" })),
 		}),
-		async execute(_toolCallId, params) {
+		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+			await ensureDepsOnce(ctx);
 			const subcommand = params.subcommand as string;
 			const extra = (params.args as string[] | undefined) ?? [];
 			const projectRoot = (params.project_root as string | undefined) ?? process.cwd();

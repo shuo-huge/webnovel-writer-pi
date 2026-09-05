@@ -60,6 +60,44 @@ export function cliEnv(): NodeJS.ProcessEnv {
 	};
 }
 
+/** 检测当前 PYTHON 是否已具备运行 webnovel 所需的核心依赖。 */
+export function pythonDepsOk(): Promise<boolean> {
+	return new Promise((resolve) => {
+		const child = spawn(PYTHON, ["-c", "import aiohttp, filelock, pydantic"], {
+			stdio: ["ignore", "ignore", "ignore"],
+		});
+		child.on("close", (code) => resolve(code === 0));
+		child.on("error", () => resolve(false));
+	});
+}
+
+export type DepsStatus = "ok" | "installed" | "failed";
+
+/**
+ * 确保 `PYTHON` 能 import 运行时核心依赖；缺失则用同一个 python 安装（仅核心三件）。
+ * 不会改动项目的开发依赖（pytest 等）。
+ */
+export async function ensurePythonDeps(): Promise<DepsStatus> {
+	if (await pythonDepsOk()) return "ok";
+
+	try {
+		const res = await new Promise<RunResult>((resolve, reject) => {
+			const child = spawn(PYTHON, ["-m", "pip", "install", "aiohttp", "filelock", "pydantic"], {
+				stdio: ["ignore", "pipe", "pipe"],
+			});
+			let stdout = "";
+			let stderr = "";
+			child.stdout.on("data", (d) => (stdout += d.toString()));
+			child.stderr.on("data", (d) => (stderr += d.toString()));
+			child.on("close", (code) => resolve({ code: code ?? 0, stdout, stderr }));
+			child.on("error", reject);
+		});
+		return pythonDepsOk() ? "installed" : "failed";
+	} catch {
+		return "failed";
+	}
+}
+
 export interface RunResult {
 	code: number;
 	stdout: string;
