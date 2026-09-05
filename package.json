@@ -1,0 +1,36 @@
+{
+  "name": "@shuohuge-org/webnovel-writer-pi",
+  "version": "0.1.0",
+  "description": "长篇网文创作系统 Pi 扩展：/webnovel-* 命令 + webnovel_run 工具 + 技能/提示词资源。",
+  "type": "module",
+  "license": "GPL-3.0",
+  "keywords": ["pi-package", "webnovel", "novel", "writing", "claude-code", "ai", "long-form"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shuo-huge/webnovel-writer-pi.git"
+  },
+  "homepage": "https://github.com/shuo-huge/webnovel-writer-pi",
+  "bugs": {
+    "url": "https://github.com/shuo-huge/webnovel-writer-pi/issues"
+  },
+  "files": [
+    "extensions",
+    "webnovel-writer/scripts",
+    "webnovel-writer/skills",
+    "webnovel-writer/templates",
+    "webnovel-writer/references",
+    "webnovel-writer/agents",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-ai": "*",
+    "typebox": "*"
+  },
+  "pi": {
+    "extensions": ["./extensions/index.ts"],
+    "skills": ["./webnovel-writer/skills"],
+    "prompts": ["./webnovel-writer/templates"]
+  }
+}

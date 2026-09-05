@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+tests/
+conftest.py
+run_tests.ps1
+.coveragerc
+.pytest_cache/
